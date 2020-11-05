@@ -1,0 +1,37 @@
+version: 2
+jobs:
+  deploy:
+    docker:
+      - image: circleci/python:2.7-jessie
+    steps:
+      - checkout          
+      - run:
+          name: Updating apt-get
+          command: sudo apt-get update
+      - run:
+          name: Installing wget
+          command: 'sudo apt-get install wget zip unzip'
+      - run:
+          name: Installing aws cli
+          command: sudo pip install awscli
+      - run:
+          name: COmpress thw web application
+          command: |
+            zip index.zip index.js   
+      - run:
+          name: Upload Artifact to S3 bucket
+          command: |
+            aws s3 cp index.zip s3://${S3_BUCKET} 
+      - run:
+          name: AWS Update Lambda Function
+          command: |
+            aws lambda update-function-code --function-name csye6225 --region us-east-1 --zip-file fileb://index.zip
+workflows:
+  version: 2
+  # pr-check:
+  #   jobs:
+  #   - pr_check
+  build_deploy:
+    jobs:
+    # - build
+    - deploy
